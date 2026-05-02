@@ -57,7 +57,7 @@ https://github.com/xXNewbiXx/agent-blackbox
 
 - CI green on GitHub.
 - README badge visible.
-- One screenshot or GIF of `dashboard.html` added.
+- Screenshot added: `docs/assets/dashboard.png`.
 - `docs/RUN_SCHEMA.md` linked.
 - `SECURITY.md` linked.
 - Roadmap issues created.
