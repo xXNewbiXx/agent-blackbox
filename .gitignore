@@ -1,0 +1,6 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+.agent-blackbox/
+examples/sample_repo/TODO.md
