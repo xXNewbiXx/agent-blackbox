@@ -1,5 +1,7 @@
 # Agent Blackbox
 
+[![ci](https://github.com/xXNewbiXx/agent-blackbox/actions/workflows/ci.yml/badge.svg)](https://github.com/xXNewbiXx/agent-blackbox/actions/workflows/ci.yml)
+
 > Flight recorder for local AI agents. See exactly what your agent did, changed, and broke.
 
 **Thesis:** If your AI agent doesn't have a blackbox, it shouldn't touch production.
