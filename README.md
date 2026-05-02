@@ -46,6 +46,7 @@ OpenTelemetry export, GitHub Actions artifact mode, VS Code extension, team run 
 - [Security and responsible use](SECURITY.md)
 - [Market niches and acquisition hooks](docs/MARKET_NICHES.md)
 - [Launch pack](docs/LAUNCH.md)
+- [Outreach pack](docs/OUTREACH.md)
 
 ## License
 MIT
