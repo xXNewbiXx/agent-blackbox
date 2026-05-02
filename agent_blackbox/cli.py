@@ -1,6 +1,7 @@
 import argparse,json,subprocess,sys,time
 from datetime import datetime,timezone
 from pathlib import Path
+from . import __version__
 from .html_report import render_dashboard
 from .risk import risk_hints
 ROOT_DIR='.agent-blackbox'
@@ -41,7 +42,9 @@ def command_view(argv):
     cwd=Path.cwd(); run_dir=(cwd/ROOT_DIR/'runs'/argv.run) if argv.run else Path((cwd/ROOT_DIR/'latest').read_text(encoding='utf-8').strip())
     print(render_dashboard(run_dir)); return 0
 def main(argv=None):
-    parser=argparse.ArgumentParser(prog='agent-blackbox',description='Flight recorder for local AI agents'); sub=parser.add_subparsers(dest='cmd',required=True)
+    parser=argparse.ArgumentParser(prog='agent-blackbox',description='Flight recorder for local AI agents')
+    parser.add_argument('--version', action='version', version=f'%(prog)s {__version__}')
+    sub=parser.add_subparsers(dest='cmd',required=True)
     p=sub.add_parser('run'); p.add_argument('command',nargs=argparse.REMAINDER); p.set_defaults(func=command_run)
     v=sub.add_parser('view'); v.add_argument('--run'); v.set_defaults(func=command_view)
     args=parser.parse_args(argv)

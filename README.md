@@ -9,8 +9,9 @@ Agent Blackbox wraps any local agent or script and records a replayable audit tr
 ## Quickstart
 
 ```bash
-python -m agent_blackbox run -- python examples/tiny_agent.py
-python -m agent_blackbox view
+python3 -m agent_blackbox run -- python3 examples/tiny_agent.py
+python3 -m agent_blackbox view
+python3 -m agent_blackbox --version
 ```
 
 ## What gets recorded
@@ -37,6 +38,12 @@ python -m agent_blackbox view
 
 ## Roadmap
 OpenTelemetry export, GitHub Actions artifact mode, VS Code extension, team run sharing, secret scanner integration, policy checks before merge.
+
+## Docs
+- [Run artifact schema](docs/RUN_SCHEMA.md)
+- [Security and responsible use](SECURITY.md)
+- [Market niches and acquisition hooks](docs/MARKET_NICHES.md)
+- [Launch pack](docs/LAUNCH.md)
 
 ## License
 MIT

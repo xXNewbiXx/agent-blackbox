@@ -8,6 +8,19 @@ from pathlib import Path
 
 
 class CliSmokeTest(unittest.TestCase):
+    def test_cli_version(self):
+        env = os.environ.copy()
+        env['PYTHONPATH'] = str(Path(__file__).resolve().parents[1])
+        result = subprocess.run(
+            [sys.executable, '-m', 'agent_blackbox', '--version'],
+            env=env,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('agent-blackbox 0.1.0', result.stdout)
+
     def test_cli_records_run(self):
         with tempfile.TemporaryDirectory() as d:
             tmp_path = Path(d)
