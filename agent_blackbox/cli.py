@@ -1,10 +1,13 @@
-import argparse,json,subprocess,sys,time
+import argparse, json, subprocess, sys, time
 from datetime import datetime,timezone
 from pathlib import Path
 from . import __version__
 from .html_report import render_dashboard
 from .risk import risk_hints
+from .policy import decide_policy, decide_policy_file
 ROOT_DIR='.agent-blackbox'
+POLICY_EXIT_CODES = {"allow": 0, "review": 1, "block": 2}
+
 def _run_git(args,cwd):
     try: return subprocess.run(['git',*args],cwd=cwd,text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=20).stdout
     except Exception: return ''
@@ -55,20 +58,41 @@ def command_run(argv):
     (run_dir/'diff.patch').write_text(diff,encoding='utf-8')
     changed=[x for x in _changed_files(cwd) if not x.startswith(ROOT_DIR+'/')]; add,rem=_diff_stats(diff); hints=risk_hints(argv.command,proc.stdout,proc.stderr,changed)
     data={'schema':'agent-blackbox.run.v1','run_id':run_id,'command':argv.command,'cwd':str(cwd),'exit_code':proc.returncode,'duration_seconds':duration,'changed_files':changed,'risk_hints':hints,'diff_added':add,'diff_removed':rem,'timeline':timeline,'privacy':{'cloud_upload':False,'secrets_intentionally_recorded':False}}
+    data['policy_decision'] = decide_policy(data)
     (run_dir/'run.json').write_text(json.dumps(data,indent=2),encoding='utf-8')
-    summary=f"# Agent Blackbox Run {run_id}\n\n- Command: `{' '.join(argv.command)}`\n- Exit code: `{proc.returncode}`\n- Duration: `{duration}s`\n- Changed files: `{len(changed)}`\n- Risk hints: `{', '.join(hints) or 'clean'}`\n- Dashboard: `{run_dir/'dashboard.html'}`\n\n## Changed files\n"+'\n'.join(f'- `{f}`' for f in changed)+'\n'
+    summary=f"# Agent Blackbox Run {run_id}\n\n- Command: `{' '.join(argv.command)}`\n- Exit code: `{proc.returncode}`\n- Duration: `{duration}s`\n- Changed files: `{len(changed)}`\n- Risk hints: `{', '.join(hints) or 'clean'}`\n- Policy decision: `{data['policy_decision']['decision']}` — {'; '.join(data['policy_decision']['reasons'])}\n- Dashboard: `{run_dir/'dashboard.html'}`\n\n## Changed files\n"+'\n'.join(f'- `{f}`' for f in changed)+'\n'
     (run_dir/'summary.md').write_text(summary,encoding='utf-8'); dashboard=render_dashboard(run_dir); (cwd/ROOT_DIR/'latest').write_text(str(run_dir),encoding='utf-8')
     print(f'Agent Blackbox captured run: {run_id}'); print(f'Report: {run_dir/"summary.md"}'); print(f'Dashboard: {dashboard}'); print(f'Risk hints: {", ".join(hints) or "clean"}')
     return proc.returncode
 def command_view(argv):
     cwd=Path.cwd(); run_dir=(cwd/ROOT_DIR/'runs'/argv.run) if argv.run else Path((cwd/ROOT_DIR/'latest').read_text(encoding='utf-8').strip())
     print(render_dashboard(run_dir)); return 0
+
+def command_policy(argv):
+    try:
+        decision = decide_policy_file(argv.run_json)
+    except FileNotFoundError:
+        print(f'error: run file not found: {argv.run_json}', file=sys.stderr)
+        return 2
+    except json.JSONDecodeError:
+        print(f'error: malformed run JSON: {argv.run_json}', file=sys.stderr)
+        return 2
+    except Exception as error:
+        print(f'error: failed to evaluate policy: {error}', file=sys.stderr)
+        return 2
+
+    print(json.dumps(decision, indent=2))
+    return POLICY_EXIT_CODES[decision["decision"]]
+
 def main(argv=None):
     parser=argparse.ArgumentParser(prog='agent-blackbox',description='Flight recorder for local AI agents')
     parser.add_argument('--version', action='version', version=f'%(prog)s {__version__}')
     sub=parser.add_subparsers(dest='cmd',required=True)
     p=sub.add_parser('run'); p.add_argument('command',nargs=argparse.REMAINDER); p.set_defaults(func=command_run)
     v=sub.add_parser('view'); v.add_argument('--run'); v.set_defaults(func=command_view)
+    p_policy=sub.add_parser('policy', help='Evaluate allow/review/block from an existing run.json')
+    p_policy.add_argument('run_json')
+    p_policy.set_defaults(func=command_policy)
     args=parser.parse_args(argv)
     if getattr(args,'command',None) and args.command[:1]==['--']: args.command=args.command[1:]
     return args.func(args)

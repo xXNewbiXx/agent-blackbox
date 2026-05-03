@@ -13,9 +13,10 @@ Agent Blackbox wraps any local agent or script and records a replayable audit tr
 ## Quickstart
 
 ```bash
-python3 -m agent_blackbox run -- python3 examples/tiny_agent.py
-python3 -m agent_blackbox view
-python3 -m agent_blackbox --version
+agent-blackbox run -- python3 examples/tiny_agent.py
+agent-blackbox view
+agent-blackbox policy "$(cat .agent-blackbox/latest)/run.json"
+agent-blackbox --version
 ```
 
 ## What gets recorded

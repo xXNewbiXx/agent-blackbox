@@ -2,7 +2,7 @@
 
 Agent Blackbox is primarily an evidence recorder: it captures what a local agent or script did so humans and teams can review the run. Policy gates are the next thin layer on top of that evidence: small, explainable checks that decide whether a run is safe to auto-accept, needs review, or must be blocked by an external workflow.
 
-This page is intentionally conservative. It does **not** claim that Agent Blackbox is a sandbox, EDR, or full prevention system.
+This page is intentionally conservative. It is evidence-based review support: it is not a sandbox, EDR, or full prevention system.
 
 ## Minimal decision model
 
@@ -14,7 +14,7 @@ A useful v0 policy decision can be represented with three outcomes:
 | `review` | Human should inspect the HTML report and diff before accepting. | File writes, stderr output, package-manager output, large diff. |
 | `block` | Do not auto-merge or auto-apply; require explicit approval or a stronger sandbox. | Secret-like output, destructive commands, unexpected network activity, production path mutation. |
 
-The practical goal is not perfect prevention. The goal is to turn opaque agent execution into a visible decision point before changes are trusted.
+The practical goal is not perfect prevention. The goal is to turn opaque agent execution into visible review evidence before changes are trusted.
 
 ## Example mapping from current risk hints
 
@@ -39,8 +39,8 @@ This is deliberately easy to explain in a PR, CI artifact, or security review:
 A future GitHub Actions or local CI wrapper could use `run.json` as evidence:
 
 ```bash
-python3 -m agent_blackbox run -- python3 -m unittest discover -s tests -v
-python3 examples/check_blackbox_policy.py "$(cat .agent-blackbox/latest)/run.json"
+agent-blackbox run -- python3 -m unittest discover -s tests -v
+agent-blackbox policy "$(cat .agent-blackbox/latest)/run.json"
 ```
 
 The example script prints a small JSON decision:
@@ -61,7 +61,13 @@ Possible CI behavior:
 3. Mark the job as neutral/manual-review when the decision is `review`.
 4. Fail the job when the decision is `block`.
 
-The policy script should be small, auditable, and repo-local. Teams can then tune thresholds without sending traces to a hosted service.
+The policy command is a first-class decision evidence command and should remain repo-local. Teams can then tune thresholds without sending traces to a hosted service.
+
+CLI exit mapping is intentionally stable for automation:
+
+- `0` means `allow`
+- `1` means `review`
+- `2` means `block`
 
 ## Demo narrative
 
@@ -87,7 +93,5 @@ They should be paired with:
 
 ## Open questions for v0.2
 
-- Should the first built-in command be `agent_blackbox policy <run.json>` or should policy stay as example scripts first?
 - Which default outcome should `network_hint` receive: `review` or `block`?
-- Should policy decisions be written into `summary.md` and `dashboard.html`?
 - How should teams override policy for intentional high-risk maintenance tasks?
