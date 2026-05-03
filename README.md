@@ -8,7 +8,7 @@
 
 Agent Blackbox wraps any local agent or script and records a replayable audit trail: command, stdout/stderr, changed files, git diff, timestamps, exit code, and risk hints. It is not another autonomous agent. It is the accountability layer for all of them.
 
-![Agent Blackbox dashboard screenshot](docs/assets/dashboard.png)
+![Agent Blackbox public-safe demo asset](docs/assets/demo_safety_lab.svg)
 
 ## Quickstart
 
