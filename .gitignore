@@ -4,3 +4,7 @@ __pycache__/
 .venv/
 .agent-blackbox/
 examples/sample_repo/TODO.md
+
+# Local integration/runtime files
+openclaw.json
+gateway.cmd

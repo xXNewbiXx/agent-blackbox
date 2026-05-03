@@ -12,8 +12,25 @@ def _is_git_repo(cwd):
     try: return subprocess.run(['git','rev-parse','--is-inside-work-tree'],cwd=cwd,text=True,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,timeout=5).stdout.strip()=='true'
     except Exception: return False
 def _changed_files(cwd):
-    out=_run_git(['status','--porcelain'],cwd) if _is_git_repo(cwd) else ''
+    out=_run_git(['status','--porcelain','-uall'],cwd) if _is_git_repo(cwd) else ''
     return sorted({line[3:].strip() for line in out.splitlines() if line.strip()})
+def _untracked_files(cwd):
+    out=_run_git(['ls-files','--others','--exclude-standard'],cwd) if _is_git_repo(cwd) else ''
+    return sorted(x for x in out.splitlines() if x.strip() and not x.startswith(ROOT_DIR+'/'))
+def _untracked_diff(cwd):
+    chunks=[]
+    for rel in _untracked_files(cwd):
+        path=Path(cwd)/rel
+        if not path.is_file():
+            continue
+        try:
+            text=path.read_text(encoding='utf-8')
+        except UnicodeDecodeError:
+            chunks.append(f"diff --git a/{rel} b/{rel}\nnew file mode 100644\n--- /dev/null\n+++ b/{rel}\n@@ binary file omitted @@\n")
+            continue
+        lines=text.splitlines()
+        chunks.append(f"diff --git a/{rel} b/{rel}\nnew file mode 100644\n--- /dev/null\n+++ b/{rel}\n@@ -0,0 +1,{len(lines)} @@\n" + ''.join(f"+{line}\n" for line in lines))
+    return '\n'.join(chunks)
 def _diff_stats(diff):
     a=r=0
     for line in diff.splitlines():
@@ -30,7 +47,12 @@ def command_run(argv):
     timeline.append({'t':time.time(),'event':'process_exit','exit_code':proc.returncode,'duration_seconds':duration})
     (run_dir/'stdout.log').write_text(proc.stdout,encoding='utf-8',errors='replace'); (run_dir/'stderr.log').write_text(proc.stderr,encoding='utf-8',errors='replace')
     (run_dir/'git-status-before.txt').write_text(before,encoding='utf-8'); (run_dir/'git-status-after.txt').write_text(_run_git(['status','--porcelain'],cwd),encoding='utf-8')
-    diff=_run_git(['diff','--',':!'+ROOT_DIR],cwd) if _is_git_repo(cwd) else ''; (run_dir/'diff.patch').write_text(diff,encoding='utf-8')
+    diff=_run_git(['diff','--',':!'+ROOT_DIR],cwd) if _is_git_repo(cwd) else ''
+    if _is_git_repo(cwd):
+        untracked=_untracked_diff(cwd)
+        if untracked:
+            diff = (diff + '\n' + untracked).strip() + '\n'
+    (run_dir/'diff.patch').write_text(diff,encoding='utf-8')
     changed=[x for x in _changed_files(cwd) if not x.startswith(ROOT_DIR+'/')]; add,rem=_diff_stats(diff); hints=risk_hints(argv.command,proc.stdout,proc.stderr,changed)
     data={'schema':'agent-blackbox.run.v1','run_id':run_id,'command':argv.command,'cwd':str(cwd),'exit_code':proc.returncode,'duration_seconds':duration,'changed_files':changed,'risk_hints':hints,'diff_added':add,'diff_removed':rem,'timeline':timeline,'privacy':{'cloud_upload':False,'secrets_intentionally_recorded':False}}
     (run_dir/'run.json').write_text(json.dumps(data,indent=2),encoding='utf-8')

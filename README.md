@@ -50,6 +50,9 @@ OpenTelemetry export, GitHub Actions artifact mode, VS Code extension, team run 
 - [Launch pack](docs/LAUNCH.md)
 - [Outreach pack](docs/OUTREACH.md)
 - [Posting queue](docs/POSTING_QUEUE.md)
+- [Command wrapper examples](docs/EXAMPLES.md)
+- [Policy gates](docs/POLICY_GATES.md)
+- [Demo pack](docs/DEMO_PACK.md)
 
 ## License
 MIT

@@ -37,6 +37,10 @@ class CliSmokeTest(unittest.TestCase):
             self.assertEqual(data['exit_code'], 0)
             self.assertIn('file_write', data['risk_hints'])
             self.assertTrue((runs[0] / 'dashboard.html').exists())
+            self.assertIn('out.txt', data['changed_files'])
+            diff = (runs[0] / 'diff.patch').read_text(encoding='utf-8')
+            self.assertIn('+++ b/out.txt', diff)
+            self.assertIn('+hi', diff)
 
 
 if __name__ == '__main__':
